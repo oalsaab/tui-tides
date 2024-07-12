@@ -7,7 +7,7 @@ use ratatui::{
 };
 use serde::Deserialize;
 
-use crate::app::SearchMode;
+use crate::app::{App, SearchMode};
 
 use super::StyledBorder;
 
@@ -60,7 +60,7 @@ impl Search {
         stations
     }
 
-    pub fn execute(&mut self) {
+    fn execute(&mut self) {
         let input = self.input.clone().to_lowercase();
 
         if self.first_search {
@@ -76,6 +76,14 @@ impl Search {
                 .iter()
                 .any(|item| item.label.to_lowercase() == input),
         );
+    }
+
+    pub fn transition(&mut self, app: &mut App) {
+        self.execute();
+
+        if self.exists.unwrap() {
+            app.transition()
+        };
     }
 
     fn non_existent(&self) -> Block {

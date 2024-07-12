@@ -188,9 +188,8 @@ fn handle_key(app: &App, key: event::KeyEvent) -> Option<Message> {
 fn update(search: &mut Search, app: &mut App, msg: Message) -> Option<Message> {
     match app.view {
         View::Search(SearchMode::Editing) => match msg {
-            // Change transition to perform execution, and accept app
             Message::Cycle | Message::Escape => app.toggle_search(&search.mode),
-            Message::Transition => search.execute(),
+            Message::Transition => search.transition(app),
             Message::SearchInput(Input::Add(ch)) => search.add_char(ch),
             Message::SearchInput(Input::Remove) => search.remove_char(),
             _ => {}
@@ -198,7 +197,7 @@ fn update(search: &mut Search, app: &mut App, msg: Message) -> Option<Message> {
 
         View::Search(SearchMode::Normal) => match msg {
             Message::Cycle => app.toggle_search(&search.mode),
-            Message::Transition => search.execute(),
+            Message::Transition => search.transition(app),
             Message::Quit => app.quit(),
             _ => {}
         },

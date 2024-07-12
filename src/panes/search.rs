@@ -14,6 +14,7 @@ use super::StyledBorder;
 #[derive(Deserialize, Clone)]
 pub struct TideGaugeStation {
     pub label: String,
+    pub stationReference: String,
 }
 
 #[derive(Deserialize)]
@@ -24,8 +25,9 @@ struct TideGaugeStations {
 pub struct Search {
     pub input: String,
     pub mode: SearchMode,
-    pub exists: Option<bool>,
     first_search: bool,
+    exists: Option<bool>,
+    pub station: Option<TideGaugeStation>,
     stations: Option<TideGaugeStations>,
 }
 
@@ -34,8 +36,9 @@ impl Search {
         Search {
             input: String::new(),
             mode: SearchMode::Editing,
-            exists: None,
             first_search: true,
+            exists: None,
+            station: None,
             stations: None,
         }
     }
@@ -60,7 +63,7 @@ impl Search {
         stations
     }
 
-    fn execute(&mut self) {
+    fn find_station(&mut self) {
         let input = self.input.clone().to_lowercase();
 
         if self.first_search {
@@ -68,21 +71,24 @@ impl Search {
             self.first_search = false
         };
 
-        self.exists = Some(
-            self.stations
-                .as_ref()
-                .unwrap()
-                .items
-                .iter()
-                .any(|item| item.label.to_lowercase() == input),
-        );
+        self.station = self
+            .stations
+            .as_ref()
+            .unwrap()
+            .items
+            .iter()
+            .find(|station| station.label.to_lowercase() == input)
+            .cloned();
     }
 
     pub fn transition(&mut self, app: &mut App) {
-        self.execute();
+        self.find_station();
 
-        if self.exists.unwrap() {
-            app.transition()
+        if self.station.is_some() {
+            self.exists = Some(true);
+            app.transition();
+        } else {
+            self.exists = Some(false);
         };
     }
 

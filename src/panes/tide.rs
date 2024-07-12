@@ -4,6 +4,9 @@ use crate::app::Focused;
 
 use super::StyledBorder;
 
+// Build chart from below (variable station)
+// https://environment.data.gov.uk/flood-monitoring/id/stations/E72639/readings?&today&_limit=100
+
 pub struct Tide {
     pub focus: Focused,
 }

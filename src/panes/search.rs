@@ -14,7 +14,8 @@ use super::StyledBorder;
 #[derive(Deserialize, Clone)]
 pub struct TideGaugeStation {
     pub label: String,
-    pub stationReference: String,
+    #[serde(rename = "stationReference")]
+    pub station_reference: String,
 }
 
 #[derive(Deserialize)]

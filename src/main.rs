@@ -6,7 +6,7 @@ use std::time::Duration;
 mod app;
 pub mod panes;
 use app::{App, Focused, RunningState, SearchMode, View};
-use panes::{search::Search, sunset::Sunset, tide::Tide, weather::Weather};
+use panes::{search::Search, Pane, PaneLayout, SearchLayout};
 
 #[derive(PartialEq, Eq)]
 enum Input {
@@ -30,19 +30,18 @@ fn main() -> io::Result<()> {
     let mut terminal = tui::init_terminal()?;
     let mut app = App::default();
     let mut search = Search::new();
+    let mut pane = Pane::build(&mut app, &mut search);
 
     while app.state != RunningState::Done {
         // Render the current view
-        terminal.draw(|f| view(&mut search, &mut app, f))?;
+        terminal.draw(|f| view(&mut pane, &mut search, &mut app, f))?;
 
         // Handle events and map to a Message
         let mut current_msg = handle_event(&app)?;
 
-        // let app = App::new();
-
         // Process updates as long as they return a non-None message
         while current_msg.is_some() {
-            current_msg = update(&mut search, &mut app, current_msg.unwrap());
+            current_msg = update(&mut pane, &mut search, &mut app, current_msg.unwrap());
         }
     }
 
@@ -50,68 +49,14 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-struct PaneLayout {
-    full: Rect,
-    top_right: Rect,
-    top_left: Rect,
-    bottom: Rect,
-}
-
-impl PaneLayout {
-    fn build(f: &mut Frame) -> PaneLayout {
-        let layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(100), Constraint::Min(3)])
-            .split(f.size());
-
-        let main = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(layout[0]);
-
-        let top = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(main[0]);
-
-        PaneLayout {
-            full: layout[0],
-            top_right: top[1],
-            top_left: top[0],
-            bottom: main[1],
-        }
-    }
-}
-
-struct SearchLayout {
-    area: Rect,
-}
-
-impl SearchLayout {
-    fn build(f: &mut Frame) -> SearchLayout {
-        let layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(100), Constraint::Min(3)])
-            .split(f.size());
-
-        let search_box = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Length(5), Constraint::Min(0)])
-            .split(layout[0]);
-
-        // Centre rect into layout[0]
-        // First figure out the text
-
-        SearchLayout {
-            area: search_box[0],
-        }
-    }
-}
-
-fn view(search: &mut Search, app: &mut App, f: &mut Frame) {
-    let panes = PaneLayout::build(f);
+fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
+    let pane_layout = PaneLayout::build(f);
     let search_layout = SearchLayout::build(f);
     let focus = app.focus;
+
+    pane.sunset.focus = focus;
+    pane.weather.focus = focus;
+    pane.tide.focus = focus;
 
     match app.view {
         View::Search(SearchMode::Editing) => {
@@ -126,16 +71,18 @@ fn view(search: &mut Search, app: &mut App, f: &mut Frame) {
 
         View::Enlarged => {
             match focus {
-                Focused::Sunset => f.render_widget(Sunset { focus }, panes.full),
-                Focused::Tide => f.render_widget(Tide { focus }, panes.full),
-                Focused::Weather => f.render_widget(Weather { focus }, panes.full),
+                Focused::Sunset => f.render_widget(pane.sunset, pane_layout.full),
+                Focused::Tide => f.render_widget(&mut pane.tide, pane_layout.full),
+                Focused::Weather => f.render_widget(pane.weather, pane_layout.full),
             };
         }
 
         View::Compressed => {
-            f.render_widget(Tide { focus }, panes.bottom);
-            f.render_widget(Sunset { focus }, panes.top_right);
-            f.render_widget(Weather { focus }, panes.top_left);
+            pane.tide.get_station_readings();
+
+            f.render_widget(&mut pane.tide, pane_layout.bottom);
+            f.render_widget(pane.sunset, pane_layout.top_right);
+            f.render_widget(pane.weather, pane_layout.top_left);
         }
     }
 }
@@ -185,11 +132,20 @@ fn handle_key(app: &App, key: event::KeyEvent) -> Option<Message> {
     }
 }
 
-fn update(search: &mut Search, app: &mut App, msg: Message) -> Option<Message> {
+fn update(pane: &mut Pane, search: &mut Search, app: &mut App, msg: Message) -> Option<Message> {
     match app.view {
         View::Search(SearchMode::Editing) => match msg {
             Message::Cycle | Message::Escape => app.toggle_search(&search.mode),
-            Message::Transition => search.transition(app),
+            Message::Transition => {
+                search.transition(app);
+
+                let station_reference = search
+                    .station
+                    .as_ref()
+                    .and_then(|f| Some(f.station_reference.clone()));
+
+                pane.tide.station_reference = station_reference;
+            }
             Message::SearchInput(Input::Add(ch)) => search.add_char(ch),
             Message::SearchInput(Input::Remove) => search.remove_char(),
             _ => {}

@@ -52,7 +52,7 @@ impl Search {
         self.input.pop();
     }
 
-    fn list_stations() -> TideGaugeStations {
+    fn get_stations() -> TideGaugeStations {
         let body = reqwest::blocking::get(
             "https://environment.data.gov.uk/flood-monitoring/id/stations?type=TideGauge",
         )
@@ -68,7 +68,7 @@ impl Search {
         let input = self.input.clone().to_lowercase();
 
         if self.first_search {
-            self.stations = Some(Search::list_stations());
+            self.stations = Some(Search::get_stations());
             self.first_search = false
         };
 

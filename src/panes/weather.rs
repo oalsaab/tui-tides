@@ -4,6 +4,7 @@ use crate::app::Focused;
 
 use super::StyledBorder;
 
+#[derive(Copy, Clone)]
 pub struct Weather {
     pub focus: Focused,
 }

@@ -8,14 +8,8 @@ use ratatui::{
 use serde::Deserialize;
 
 use crate::app::Focused;
-use std::{fs::File, io::Write};
 
 use super::StyledBorder;
-
-fn to_file(fname: &str, input: &str) {
-    let mut file = File::create(format!("{}.txt", fname)).unwrap();
-    file.write_all(input.as_bytes()).unwrap();
-}
 
 struct StationRanges {
     labels: Vec<String>,
@@ -112,15 +106,6 @@ impl Tide {
         let body = reqwest::blocking::get(&url).unwrap().text().unwrap();
 
         let readings: StationReadings = serde_json::from_str(&body).unwrap();
-
-        let data: String = readings
-            .dataset()
-            .iter()
-            .map(|(a, b)| format!("{} - {}{}", a.to_string(), b.to_string(), "\n"))
-            .collect();
-
-        to_file("url", &url);
-        to_file("data", &data);
 
         self.readings = Some(readings);
         self.rendered = true;

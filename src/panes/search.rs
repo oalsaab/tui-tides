@@ -27,7 +27,7 @@ pub struct Search {
     pub input: String,
     pub mode: SearchMode,
     first_search: bool,
-    exists: Option<bool>,
+    pub exists: Option<bool>,
     pub station: Option<TideGaugeStation>,
     stations: Option<TideGaugeStations>,
 }
@@ -52,9 +52,10 @@ impl Search {
         self.input.pop();
     }
 
+    // When this fails it tells us station does not exist...?
     fn get_stations() -> TideGaugeStations {
         let body = reqwest::blocking::get(
-            "https://environment.data.gov.uk/flood-monitoring/id/stations?type=TideGauge",
+            "https://environment.data.gov.uk/flood-monitoring/id/stations?type=TideGauge&unitName=mAOD",
         )
         .unwrap()
         .text()

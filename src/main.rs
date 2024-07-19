@@ -41,7 +41,7 @@ fn main() -> io::Result<()> {
 
         // Process updates as long as they return a non-None message
         while current_msg.is_some() {
-            current_msg = update(&mut pane, &mut search, &mut app, current_msg.unwrap());
+            current_msg = update(&mut search, &mut app, current_msg.unwrap());
         }
     }
 
@@ -49,14 +49,30 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
-    let pane_layout = PaneLayout::build(f);
-    let search_layout = SearchLayout::build(f);
+fn orchestrate(pane: &mut Pane, search: &mut Search, app: &mut App) {
     let focus = app.focus;
 
     pane.sunset.focus = focus;
     pane.weather.focus = focus;
     pane.tide.focus = focus;
+
+    pane.tide.station_reference = search
+        .station
+        .as_ref()
+        .and_then(|f| Some(f.station_reference.clone()));
+
+    // If station exists, we can get it's data
+    match search.exists {
+        Some(true) => pane.tide.get_station_readings(),
+        _ => {}
+    }
+}
+
+fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
+    let pane_layout = PaneLayout::build(f);
+    let search_layout = SearchLayout::build(f);
+
+    orchestrate(pane, search, app);
 
     match app.view {
         View::Search(SearchMode::Editing) => {
@@ -70,7 +86,7 @@ fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
         }
 
         View::Enlarged => {
-            match focus {
+            match app.focus {
                 Focused::Sunset => f.render_widget(pane.sunset, pane_layout.full),
                 Focused::Tide => f.render_widget(&mut pane.tide, pane_layout.full),
                 Focused::Weather => f.render_widget(pane.weather, pane_layout.full),
@@ -78,8 +94,6 @@ fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
         }
 
         View::Compressed => {
-            pane.tide.get_station_readings();
-
             f.render_widget(&mut pane.tide, pane_layout.bottom);
             f.render_widget(pane.sunset, pane_layout.top_right);
             f.render_widget(pane.weather, pane_layout.top_left);
@@ -132,20 +146,11 @@ fn handle_key(app: &App, key: event::KeyEvent) -> Option<Message> {
     }
 }
 
-fn update(pane: &mut Pane, search: &mut Search, app: &mut App, msg: Message) -> Option<Message> {
+fn update(search: &mut Search, app: &mut App, msg: Message) -> Option<Message> {
     match app.view {
         View::Search(SearchMode::Editing) => match msg {
             Message::Cycle | Message::Escape => app.toggle_search(&search.mode),
-            Message::Transition => {
-                search.transition(app);
-
-                let station_reference = search
-                    .station
-                    .as_ref()
-                    .and_then(|f| Some(f.station_reference.clone()));
-
-                pane.tide.station_reference = station_reference;
-            }
+            Message::Transition => search.transition(app),
             Message::SearchInput(Input::Add(ch)) => search.add_char(ch),
             Message::SearchInput(Input::Remove) => search.remove_char(),
             _ => {}

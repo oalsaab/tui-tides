@@ -116,8 +116,8 @@ impl Pane {
         Tide {
             focus,
             station_reference: None,
-            rendered: false,
             readings: None,
+            rendered: false,
         }
     }
 

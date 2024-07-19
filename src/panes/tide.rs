@@ -86,12 +86,13 @@ struct StationReading {
 pub struct Tide {
     pub focus: Focused,
     pub station_reference: Option<String>,
-    pub rendered: bool,
     pub readings: Option<StationReadings>,
+    pub rendered: bool,
 }
 
 impl Tide {
     pub fn get_station_readings(&mut self) {
+        // If we've rendered it, don't make another call to API
         if self.rendered {
             return;
         }
@@ -121,8 +122,8 @@ impl Widget for &mut Tide {
         .title("Tide");
 
         let readings = self.readings.as_ref().unwrap();
-        let data = readings.dataset();
 
+        let data = readings.dataset();
         let y = readings.measurement_range();
         let x = readings.dt_range();
 

@@ -1,19 +1,47 @@
-use chrono::{DateTime, Utc};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::{Style, Styled, Stylize},
+    style::{Style, Stylize},
     symbols,
-    widgets::{Axis, Block, Chart, Dataset, GraphType, Widget},
+    widgets::{Axis, Chart, Dataset, GraphType, Widget},
 };
 use serde::Deserialize;
 
 use crate::app::Focused;
+use std::{fs::File, io::Write};
 
 use super::StyledBorder;
 
-// Build chart from below (variable station)
-// https://environment.data.gov.uk/flood-monitoring/id/stations/E72639/readings?&today&_limit=100
+fn to_file(fname: &str, input: &str) {
+    let mut file = File::create(format!("{}.txt", fname)).unwrap();
+    file.write_all(input.as_bytes()).unwrap();
+}
+
+struct StationRanges {
+    labels: Vec<String>,
+    min: f64,
+    max: f64,
+}
+
+impl StationRanges {
+    fn build(data: &[f64]) -> StationRanges {
+        let max = data.iter().max_by(|a, b| a.total_cmp(b)).unwrap();
+        let min = data.iter().min_by(|a, b| a.total_cmp(b)).unwrap();
+        let mid = (max + min) / 2.0;
+
+        let labels = vec![
+            format!("{:.2}", min),
+            format!("{:.2}", mid),
+            format!("{:.2}", max),
+        ];
+
+        StationRanges {
+            labels,
+            min: *min,
+            max: *max,
+        }
+    }
+}
 
 #[derive(Deserialize, Clone)]
 pub struct StationReadings {
@@ -38,14 +66,19 @@ impl StationReadings {
         hours + (minutes / 60.0)
     }
 
-    fn measurement_range(&self) -> Vec<String> {
-        let measurements: Vec<f64> = self.items.iter().map(|f| f.value).collect();
+    fn measurement_range(&self) -> StationRanges {
+        let data: Vec<f64> = self.items.iter().map(|f| f.value).collect();
+        StationRanges::build(&data)
+    }
 
-        let max = measurements.iter().max_by(|a, b| a.total_cmp(b)).unwrap();
-        let min = measurements.iter().min_by(|a, b| a.total_cmp(b)).unwrap();
-        let mid = (max + min) / 2.0;
+    fn dt_range(&self) -> StationRanges {
+        let data: Vec<f64> = self
+            .items
+            .iter()
+            .map(|f| self.convert_dt(&f.date_time))
+            .collect();
 
-        vec![min.to_string(), mid.to_string(), max.to_string()]
+        StationRanges::build(&data)
     }
 }
 #[derive(Deserialize, Clone)]
@@ -76,9 +109,18 @@ impl Tide {
 
         let url = format!("https://environment.data.gov.uk/flood-monitoring/id/stations/{}/readings?&today&_limit=100", station_reference);
 
-        let body = reqwest::blocking::get(url).unwrap().text().unwrap();
+        let body = reqwest::blocking::get(&url).unwrap().text().unwrap();
 
         let readings: StationReadings = serde_json::from_str(&body).unwrap();
+
+        let data: String = readings
+            .dataset()
+            .iter()
+            .map(|(a, b)| format!("{} - {}{}", a.to_string(), b.to_string(), "\n"))
+            .collect();
+
+        to_file("url", &url);
+        to_file("data", &data);
 
         self.readings = Some(readings);
         self.rendered = true;
@@ -95,9 +137,9 @@ impl Widget for &mut Tide {
 
         let readings = self.readings.as_ref().unwrap();
         let data = readings.dataset();
-        let m_labels = readings.measurement_range();
 
-        // let data = &self.readings.as_ref().unwrap().dataset();
+        let y = readings.measurement_range();
+        let x = readings.dt_range();
 
         let datasets = vec![Dataset::default()
             .marker(symbols::Marker::Dot)
@@ -105,19 +147,17 @@ impl Widget for &mut Tide {
             .style(Style::default().magenta())
             .data(&data)];
 
-        // Create the X axis and define its properties
         let x_axis = Axis::default()
             .title("Time".red())
             .style(Style::default().white())
-            .bounds([0.0, 24.0])
-            .labels(vec!["0.0".into(), "12.0".into(), "23.45".into()]);
+            .bounds([x.min, x.max])
+            .labels(x.labels.iter().map(|f| f.into()).collect());
 
-        // Create the Y axis and define its properties
         let y_axis = Axis::default()
             .title("mOAD".red())
             .style(Style::default().white())
-            .bounds([-10.0, 25.0])
-            .labels(m_labels.iter().map(|f| f.into()).collect());
+            .bounds([y.min, y.max])
+            .labels(y.labels.iter().map(|f| f.into()).collect());
 
         Chart::new(datasets)
             .x_axis(x_axis)

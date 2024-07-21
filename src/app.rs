@@ -2,7 +2,7 @@
 pub enum Focused {
     #[default]
     Weather,
-    Sunset,
+    // Sunset,
     Tide,
 }
 
@@ -42,9 +42,14 @@ pub struct App {
 
 impl App {
     pub fn cycle(&mut self) {
+        // self.focus = match self.focus {
+        //     Focused::Weather => Focused::Sunset,
+        //     Focused::Sunset => Focused::Tide,
+        //     Focused::Tide => Focused::Weather,
+        // };
+
         self.focus = match self.focus {
-            Focused::Weather => Focused::Sunset,
-            Focused::Sunset => Focused::Tide,
+            Focused::Weather => Focused::Tide,
             Focused::Tide => Focused::Weather,
         };
     }

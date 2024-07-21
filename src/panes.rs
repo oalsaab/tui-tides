@@ -42,8 +42,9 @@ impl StyledBorder for Tide {}
 
 pub struct PaneLayout {
     pub full: Rect,
-    pub top_right: Rect,
-    pub top_left: Rect,
+    pub top: Rect,
+    // pub top_right: Rect,
+    // pub top_left: Rect,
     pub bottom: Rect,
 }
 
@@ -59,15 +60,16 @@ impl PaneLayout {
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(layout[0]);
 
-        let top = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(main[0]);
+        // let top = Layout::default()
+        //     .direction(Direction::Horizontal)
+        //     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        //     .split(main[0]);
 
         PaneLayout {
             full: layout[0],
-            top_right: top[1],
-            top_left: top[0],
+            top: main[0],
+            // top_right: top[1],
+            // top_left: top[0],
             bottom: main[1],
         }
     }

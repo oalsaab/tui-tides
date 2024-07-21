@@ -91,7 +91,7 @@ pub struct Pane {
 }
 
 impl Pane {
-    pub fn build(app: &mut App, search: &mut Search) -> Pane {
+    pub fn build(app: &mut App) -> Pane {
         let focus = app.focus;
 
         Pane {

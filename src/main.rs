@@ -31,7 +31,7 @@ fn main() -> io::Result<()> {
     let mut terminal = tui::init_terminal()?;
     let mut app = App::default();
     let mut search = Search::new();
-    let mut pane = Pane::build(&mut app, &mut search);
+    let mut pane = Pane::build(&mut app);
 
     while app.state != RunningState::Done {
         // Render the current view

@@ -6,12 +6,10 @@ use ratatui::{
 };
 
 pub mod search;
-pub mod sunset;
 pub mod tide;
 pub mod weather;
 
 use search::Search;
-use sunset::Sunset;
 use tide::Tide;
 use weather::Weather;
 
@@ -37,14 +35,11 @@ trait StyledBorder {
 
 impl StyledBorder for Search {}
 impl StyledBorder for Weather {}
-impl StyledBorder for Sunset {}
 impl StyledBorder for Tide {}
 
 pub struct PaneLayout {
     pub full: Rect,
     pub top: Rect,
-    // pub top_right: Rect,
-    // pub top_left: Rect,
     pub bottom: Rect,
 }
 
@@ -60,16 +55,9 @@ impl PaneLayout {
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(layout[0]);
 
-        // let top = Layout::default()
-        //     .direction(Direction::Horizontal)
-        //     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        //     .split(main[0]);
-
         PaneLayout {
             full: layout[0],
             top: main[0],
-            // top_right: top[1],
-            // top_left: top[0],
             bottom: main[1],
         }
     }
@@ -98,7 +86,6 @@ impl SearchLayout {
 }
 
 pub struct Pane {
-    pub sunset: Sunset,
     pub tide: Tide,
     pub weather: Weather,
 }
@@ -108,7 +95,6 @@ impl Pane {
         let focus = app.focus;
 
         Pane {
-            sunset: Pane::build_sunset(focus),
             tide: Pane::build_tide(focus),
             weather: Pane::build_weather(focus),
         }
@@ -121,10 +107,6 @@ impl Pane {
             readings: None,
             rendered: false,
         }
-    }
-
-    fn build_sunset(focus: Focused) -> Sunset {
-        Sunset { focus }
     }
 
     fn build_weather(focus: Focused) -> Weather {

@@ -53,7 +53,6 @@ fn main() -> io::Result<()> {
 fn orchestrate(pane: &mut Pane, search: &mut Search, app: &mut App) {
     let focus = app.focus;
 
-    pane.sunset.focus = focus;
     pane.weather.focus = focus;
     pane.tide.focus = focus;
 
@@ -88,7 +87,6 @@ fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
 
         View::Enlarged => {
             match app.focus {
-                // Focused::Sunset => f.render_widget(pane.sunset, pane_layout.full),
                 Focused::Tide => f.render_widget(&mut pane.tide, pane_layout.full),
                 Focused::Weather => f.render_widget(pane.weather, pane_layout.full),
             };
@@ -96,8 +94,6 @@ fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
 
         View::Compressed => {
             f.render_widget(&mut pane.tide, pane_layout.bottom);
-            // f.render_widget(pane.sunset, pane_layout.top_right);
-            // f.render_widget(pane.weather, pane_layout.top_left);
             f.render_widget(pane.weather, pane_layout.top);
         }
     }

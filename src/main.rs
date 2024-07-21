@@ -3,6 +3,7 @@ use ratatui::prelude::*;
 use std::io;
 use std::time::Duration;
 
+pub mod apis;
 mod app;
 pub mod panes;
 use app::{App, Focused, RunningState, SearchMode, View};

@@ -7,6 +7,7 @@ use ratatui::{
 };
 use serde::Deserialize;
 
+use crate::apis::station;
 use crate::app::{App, SearchMode};
 
 use super::StyledBorder;
@@ -54,12 +55,7 @@ impl Search {
 
     // When this fails it tells us station does not exist...?
     fn get_stations() -> TideGaugeStations {
-        let body = reqwest::blocking::get(
-            "https://environment.data.gov.uk/flood-monitoring/id/stations?type=TideGauge&unitName=mAOD",
-        )
-        .unwrap()
-        .text()
-        .unwrap();
+        let body = station::Stations::new().call();
 
         let stations: TideGaugeStations = serde_json::from_str(&body).unwrap();
         stations

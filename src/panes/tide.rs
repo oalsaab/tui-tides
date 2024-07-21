@@ -7,9 +7,9 @@ use ratatui::{
 };
 use serde::Deserialize;
 
-use crate::app::Focused;
-
 use super::StyledBorder;
+use crate::apis::station;
+use crate::app::Focused;
 
 struct StationRanges {
     labels: Vec<String>,
@@ -102,9 +102,7 @@ impl Tide {
             .as_ref()
             .expect("Only reached when station is found");
 
-        let url = format!("https://environment.data.gov.uk/flood-monitoring/id/stations/{}/readings?&today&_limit=100", station_reference);
-
-        let body = reqwest::blocking::get(&url).unwrap().text().unwrap();
+        let body = station::Readings::new().call(&station_reference);
 
         let readings: StationReadings = serde_json::from_str(&body).unwrap();
 

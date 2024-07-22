@@ -52,6 +52,9 @@ impl Readings {
 
         let url = reqwest::Url::parse_with_params(&api, &params).unwrap();
 
+        // todo: FIX
+        let url = format!("https://environment.data.gov.uk/flood-monitoring/id/stations/{}/readings?&today&_limit=100", station);
+
         reqwest::blocking::get(url).unwrap().text().unwrap()
     }
 }

@@ -10,32 +10,7 @@ use serde::Deserialize;
 use super::StyledBorder;
 use crate::apis::station;
 use crate::app::Focused;
-
-struct StationRanges {
-    labels: Vec<String>,
-    min: f64,
-    max: f64,
-}
-
-impl StationRanges {
-    fn build(data: &[f64]) -> StationRanges {
-        let max = data.iter().max_by(|a, b| a.total_cmp(b)).unwrap();
-        let min = data.iter().min_by(|a, b| a.total_cmp(b)).unwrap();
-        let mid = (max + min) / 2.0;
-
-        let labels = vec![
-            format!("{:.2}", min),
-            format!("{:.2}", mid),
-            format!("{:.2}", max),
-        ];
-
-        StationRanges {
-            labels,
-            min: *min,
-            max: *max,
-        }
-    }
-}
+use crate::panes::ChartRanges;
 
 #[derive(Deserialize, Clone)]
 pub struct StationReadings {
@@ -57,22 +32,22 @@ impl StationReadings {
         let hours: f64 = parts[0].parse().unwrap();
         let minutes: f64 = parts[1].parse().unwrap();
 
-        hours + (minutes / 60.0)
+        hours + (minutes / 100.0)
     }
 
-    fn measurement_range(&self) -> StationRanges {
+    fn measurement_range(&self) -> ChartRanges {
         let data: Vec<f64> = self.items.iter().map(|f| f.value).collect();
-        StationRanges::build(&data)
+        ChartRanges::build(&data)
     }
 
-    fn dt_range(&self) -> StationRanges {
+    fn dt_range(&self) -> ChartRanges {
         let data: Vec<f64> = self
             .items
             .iter()
             .map(|f| self.convert_dt(&f.date_time))
             .collect();
 
-        StationRanges::build(&data)
+        ChartRanges::build(&data)
     }
 }
 #[derive(Deserialize, Clone)]

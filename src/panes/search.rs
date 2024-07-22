@@ -17,6 +17,9 @@ pub struct TideGaugeStation {
     pub label: String,
     #[serde(rename = "stationReference")]
     pub station_reference: String,
+    pub lat: f64,
+    #[serde(rename = "long")]
+    pub lon: f64,
 }
 
 #[derive(Deserialize)]

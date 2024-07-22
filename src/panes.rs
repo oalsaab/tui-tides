@@ -110,6 +110,38 @@ impl Pane {
     }
 
     fn build_weather(focus: Focused) -> Weather {
-        Weather { focus }
+        Weather {
+            focus,
+            lat: None,
+            lon: None,
+            readings: None,
+            rendered: false,
+        }
+    }
+}
+
+pub struct ChartRanges {
+    pub labels: Vec<String>,
+    pub min: f64,
+    pub max: f64,
+}
+
+impl ChartRanges {
+    pub fn build(data: &[f64]) -> ChartRanges {
+        let max = data.iter().max_by(|a, b| a.total_cmp(b)).unwrap();
+        let min = data.iter().min_by(|a, b| a.total_cmp(b)).unwrap();
+        let mid = (max + min) / 2.0;
+
+        let labels = vec![
+            format!("{:.2}", min),
+            format!("{:.2}", mid),
+            format!("{:.2}", max),
+        ];
+
+        ChartRanges {
+            labels,
+            min: *min,
+            max: *max,
+        }
     }
 }

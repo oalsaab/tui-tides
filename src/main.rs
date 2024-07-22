@@ -56,14 +56,19 @@ fn orchestrate(pane: &mut Pane, search: &mut Search, app: &mut App) {
     pane.weather.focus = focus;
     pane.tide.focus = focus;
 
-    pane.tide.station_reference = search
-        .station
-        .as_ref()
-        .and_then(|f| Some(f.station_reference.clone()));
+    let station = search.station.as_ref();
+
+    pane.tide.station_reference = station.and_then(|f| Some(f.station_reference.clone()));
+
+    pane.weather.lat = station.and_then(|f| Some(f.lat));
+    pane.weather.lon = station.and_then(|f| Some(f.lon));
 
     // If station exists, we can get it's data
     match search.exists {
-        Some(true) => pane.tide.get_station_readings(),
+        Some(true) => {
+            pane.tide.get_station_readings();
+            pane.weather.get_temperature_readings()
+        }
         _ => {}
     }
 }
@@ -88,13 +93,13 @@ fn view(pane: &mut Pane, search: &mut Search, app: &mut App, f: &mut Frame) {
         View::Enlarged => {
             match app.focus {
                 Focused::Tide => f.render_widget(&mut pane.tide, pane_layout.full),
-                Focused::Weather => f.render_widget(pane.weather, pane_layout.full),
+                Focused::Weather => f.render_widget(&mut pane.weather, pane_layout.full),
             };
         }
 
         View::Compressed => {
             f.render_widget(&mut pane.tide, pane_layout.bottom);
-            f.render_widget(pane.weather, pane_layout.top);
+            f.render_widget(&mut pane.weather, pane_layout.top);
         }
     }
 }

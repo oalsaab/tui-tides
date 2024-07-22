@@ -1,1 +1,0 @@
-https://api.open-meteo.com/v1/forecast?latitude=51.57&longitude=-3.97544&minutely_15=temperature_2m&start_date=2024-07-22&end_date=2024-07-22

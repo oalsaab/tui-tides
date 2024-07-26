@@ -1,13 +1,11 @@
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::{Style, Stylize},
-    symbols,
-    widgets::{Axis, Chart, Dataset, GraphType, Widget},
+    widgets::{Chart, Widget},
 };
 use serde::Deserialize;
 
-use super::StyledBorder;
+use super::{ChartPane, StyledBorder};
 use crate::apis::station;
 use crate::app::Focused;
 use crate::panes::ChartRanges;
@@ -100,27 +98,11 @@ impl Widget for &mut Tide {
         let y = readings.measurement_range();
         let x = readings.dt_range();
 
-        let datasets = vec![Dataset::default()
-            .marker(symbols::Marker::Dot)
-            .graph_type(GraphType::Scatter)
-            .style(Style::default().magenta())
-            .data(&data)];
+        let chart = self.create(&data, &x, &y, "Time", "mOAD");
 
-        let x_axis = Axis::default()
-            .title("Time".red())
-            .style(Style::default().white())
-            .bounds([x.min, x.max])
-            .labels(x.labels.iter().map(|f| f.into()).collect());
-
-        let y_axis = Axis::default()
-            .title("mOAD".red())
-            .style(Style::default().white())
-            .bounds([y.min, y.max])
-            .labels(y.labels.iter().map(|f| f.into()).collect());
-
-        Chart::new(datasets)
-            .x_axis(x_axis)
-            .y_axis(y_axis)
+        Chart::new(chart.datasets)
+            .x_axis(chart.x_axis)
+            .y_axis(chart.y_axis)
             .block(block)
             .render(area, buf);
     }

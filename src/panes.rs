@@ -1,7 +1,8 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Stylize},
-    widgets::{Block, BorderType, Borders},
+    style::{Color, Style, Stylize},
+    symbols,
+    widgets::{Axis, Block, BorderType, Borders, Dataset, GraphType},
     Frame,
 };
 
@@ -145,3 +146,47 @@ impl ChartRanges {
         }
     }
 }
+
+pub struct ChartData<'a> {
+    pub datasets: Vec<Dataset<'a>>,
+    pub x_axis: Axis<'a>,
+    pub y_axis: Axis<'a>,
+}
+
+trait ChartPane {
+    fn create<'a>(
+        &'a self,
+        data: &'a [(f64, f64)],
+        x: &'a ChartRanges,
+        y: &'a ChartRanges,
+        x_title: &'a str,
+        y_title: &'a str,
+    ) -> ChartData {
+        let datasets = vec![Dataset::default()
+            .marker(symbols::Marker::Dot)
+            .graph_type(GraphType::Scatter)
+            .style(Style::default().magenta())
+            .data(&data)];
+
+        let x_axis = Axis::default()
+            .title(x_title.red())
+            .style(Style::default().white())
+            .bounds([x.min, x.max])
+            .labels(x.labels.iter().map(|f| f.into()).collect());
+
+        let y_axis = Axis::default()
+            .title(y_title.red())
+            .style(Style::default().white())
+            .bounds([y.min, y.max])
+            .labels(y.labels.iter().map(|f| f.into()).collect());
+
+        ChartData {
+            datasets,
+            x_axis,
+            y_axis,
+        }
+    }
+}
+
+impl ChartPane for Tide {}
+impl ChartPane for Weather {}

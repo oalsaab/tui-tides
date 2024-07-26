@@ -65,7 +65,6 @@ pub struct Tide {
 
 impl Tide {
     pub fn get_station_readings(&mut self) {
-        // If we've rendered it, don't make another call to API
         if self.rendered {
             return;
         }

@@ -1,8 +1,6 @@
 const ROOT: &str = "https://api.open-meteo.com";
 const PATH: &str = "v1/forecast";
 
-// https://api.open-meteo.com/v1/forecast?latitude=51.57&longitude=-3.97544&minutely_15=temperature_2m
-
 pub struct Meteo {
     pub temperature: String,
     pub start_date: String,

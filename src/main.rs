@@ -34,13 +34,10 @@ fn main() -> io::Result<()> {
     let mut pane = Pane::build(&mut app);
 
     while app.state != RunningState::Done {
-        // Render the current view
         terminal.draw(|f| view(&mut pane, &mut search, &mut app, f))?;
 
-        // Handle events and map to a Message
         let mut current_msg = handle_event(&app)?;
 
-        // Process updates as long as they return a non-None message
         while current_msg.is_some() {
             current_msg = update(&mut search, &mut app, current_msg.unwrap());
         }

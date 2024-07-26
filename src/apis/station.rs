@@ -1,7 +1,7 @@
 const ROOT: &str = "https://environment.data.gov.uk";
 const PATH: &str = "flood-monitoring/id/stations";
 
-pub enum Duration {
+pub enum Period {
     Today,
     Latest,
 }
@@ -28,22 +28,22 @@ impl Stations {
 }
 
 pub struct Readings {
-    pub duration: Duration,
+    pub duration: Period,
     pub limit: i8,
 }
 
 impl Readings {
     pub fn new() -> Readings {
         Readings {
-            duration: Duration::Today,
+            duration: Period::Today,
             limit: 100,
         }
     }
 
     pub fn call(&self, station: &str) -> String {
         let dur = match self.duration {
-            Duration::Today => "today",
-            Duration::Latest => "latest",
+            Period::Today => "today",
+            Period::Latest => "latest",
         };
 
         let api = format!("{}/{}/{}/readings?&{}", ROOT, PATH, station, dur);
@@ -51,9 +51,6 @@ impl Readings {
         let params = [("_limit", &self.limit.to_string())];
 
         let url = reqwest::Url::parse_with_params(&api, &params).unwrap();
-
-        // todo: FIX
-        let url = format!("https://environment.data.gov.uk/flood-monitoring/id/stations/{}/readings?&today&_limit=100", station);
 
         reqwest::blocking::get(url).unwrap().text().unwrap()
     }

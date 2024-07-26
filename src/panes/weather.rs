@@ -96,7 +96,7 @@ impl Widget for &mut Weather {
 
         let datasets = vec![Dataset::default()
             .marker(symbols::Marker::Dot)
-            .graph_type(GraphType::Scatter)
+            .graph_type(GraphType::Line)
             .style(Style::default().magenta())
             .data(&data)];
 
